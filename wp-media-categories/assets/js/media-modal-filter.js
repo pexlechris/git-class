@@ -2,38 +2,47 @@
 (function($) {
     'use strict';
 
-    if (typeof wp === 'undefined' || typeof wp.media === 'undefined') {
-        // WordPress media scripts not loaded
-        return;
-    }
-
-    $(document).ready(function() {
-        // Ensure mediaCategoryFilterData is available
-        if (typeof mediaCategoryFilterData === 'undefined') {
-            // console.error('Media Category Filter: Data object not found.');
+    function extendMediaViews() {
+        // console.log('Media Category Filter: Attempting to extend media views...');
+        if (typeof wp === 'undefined' || 
+            typeof wp.media === 'undefined' ||
+            typeof wp.media.view === 'undefined' ||
+            typeof wp.media.view.AttachmentsBrowser === 'undefined' ||
+            typeof wp.media.view.AttachmentFilters === 'undefined' ||
+            typeof wp.media.view.AttachmentFilters.Select === 'undefined') {
+            // console.warn('Media Category Filter: Necessary WP Media objects not yet available for extension.');
             return;
         }
+
+        // console.log('Media Category Filter: All necessary WP Media objects found.');
+
+        if (typeof mediaCategoryFilterData === 'undefined') {
+            // console.error('Media Category Filter: mediaCategoryFilterData object not found.');
+            return;
+        }
+        // console.log('Media Category Filter: mediaCategoryFilterData found:', mediaCategoryFilterData);
+
 
         var originalAttachmentsBrowser = wp.media.view.AttachmentsBrowser;
-        if (!originalAttachmentsBrowser) {
-            // console.error('Media Category Filter: wp.media.view.AttachmentsBrowser not found.');
-            return;
-        }
-
+        // console.log('Media Category Filter: Extending wp.media.view.AttachmentsBrowser...');
         wp.media.view.AttachmentsBrowser = originalAttachmentsBrowser.extend({
             createToolbar: function() {
-                // Call the original createToolbar
+                // console.log('Media Category Filter: AttachmentsBrowser.createToolbar called.');
                 originalAttachmentsBrowser.prototype.createToolbar.apply(this, arguments);
 
-                // Add our custom filter dropdown
                 var filters = this.toolbar.get('filters');
                 if (filters && mediaCategoryFilterData.terms.length > 0) {
+                    // console.log('Media Category Filter: Adding taxonomy filter to toolbar.');
+                    if (typeof wp.media.view.AttachmentFilters.Select === 'undefined') {
+                        // console.error('Media Category Filter: CRITICAL - AttachmentFilters.Select undefined just before instantiation!');
+                        return;
+                    }
                     var taxonomyFilter = new wp.media.view.AttachmentFilters.Select({
                         controller: this.controller,
                         model: this.collection.props,
-                        priority: -75, // Negative numbers for left, positive for right. Adjust as needed.
+                        priority: -75,
                         label: mediaCategoryFilterData.select_label || 'Filter by Category',
-                        property: mediaCategoryFilterData.taxonomy_slug, // This will be the query var
+                        property: mediaCategoryFilterData.taxonomy_slug,
                         options: (function() {
                             var options = {};
                             options['all'] = mediaCategoryFilterData.all_categories_label || 'All Categories';
@@ -44,51 +53,40 @@
                         })()
                     });
                     this.toolbar.set(mediaCategoryFilterData.taxonomy_slug + '-filter', taxonomyFilter);
+                    // console.log('Media Category Filter: Taxonomy filter added to toolbar.');
+                } else {
+                    // console.log('Media Category Filter: No terms or no filters object, not adding taxonomy filter.');
                 }
             }
         });
 
-        // Additionally, if you want the filter to appear in the "Insert Media" screen's left sidebar
-        // (where "Uploaded to this post", "Images", "Video" etc. appear)
-        // This is a bit more involved as it modifies the router if not present.
-
-        var originalMediaFrame = wp.media.view.MediaFrame.Post;
-        if (originalMediaFrame) {
-            wp.media.view.MediaFrame.Post = originalMediaFrame.extend({
+        var originalMediaFramePost = wp.media.view.MediaFrame.Post;
+        if (originalMediaFramePost) {
+            // console.log('Media Category Filter: Extending wp.media.view.MediaFrame.Post...');
+            wp.media.view.MediaFrame.Post = originalMediaFramePost.extend({
                 initialize: function() {
-                    originalMediaFrame.prototype.initialize.apply(this, arguments);
+                    // console.log('Media Category Filter: MediaFrame.Post.initialize called.');
+                    originalMediaFramePost.prototype.initialize.apply(this, arguments);
 
                     if (mediaCategoryFilterData.terms.length > 0) {
                         var self = this;
-                        // Ensure states are present
                         if (!this.states) {
+                            // console.warn('Media Category Filter: MediaFrame.Post - this.states not found.');
                             return;
                         }
-                        
                         this.states.each(function(state) {
-                            // We are interested in the 'library' state, which handles attachments browsing
                             if (state.id === 'library' || (state.props && state.props.get('id') === 'library')) {
+                                // console.log('Media Category Filter: MediaFrame.Post - Modifying library state props for taxonomy:', mediaCategoryFilterData.taxonomy_slug);
                                 var originalProps = state.props.toJSON();
-                                originalProps[mediaCategoryFilterData.taxonomy_slug] = 'all'; // Default to 'all'
+                                originalProps[mediaCategoryFilterData.taxonomy_slug] = 'all';
                                 state.props.set(originalProps);
 
-                                // This is a bit of a hack to make sure the query args update
-                                // when the filter is changed from the toolbar.
-                                // The AttachmentsBrowser toolbar filter directly modifies `this.collection.props`.
-                                // The state needs to be aware of this for subsequent queries (e.g., search).
                                 if (state.get('library') && state.get('library').props) {
                                    state.get('library').props.on('change:' + mediaCategoryFilterData.taxonomy_slug, function(model, value) {
-                                       // When our custom filter changes, update the state's library props.
-                                       // This helps ensure that if other actions (like search) reset parts of the query,
-                                       // our taxonomy filter selection is maintained.
+                                       // console.log('Media Category Filter: MediaFrame.Post - Detected change in taxonomy filter value:', value);
                                        var newProps = {};
                                        newProps[mediaCategoryFilterData.taxonomy_slug] = value;
                                        state.props.set(newProps);
-
-                                       // Trigger a refresh of the content
-                                       // This might not be strictly necessary if the toolbar filter already handles it well.
-                                       // self.content.get().collection.props.set(mediaCategoryFilterData.taxonomy_slug, value);
-                                       // self.content.get().collection.more(); // This might fetch more without resetting, adjust as needed
                                    });
                                 }
                             }
@@ -96,6 +94,37 @@
                     }
                 }
             });
+        } else {
+            // console.warn('Media Category Filter: wp.media.view.MediaFrame.Post not found, not extending.');
+        }
+        // console.log('Media Category Filter: WP Media views extension process completed.');
+    }
+
+    $(document).ready(function() {
+        // console.log('Media Category Filter: Document ready.');
+        if (typeof wp !== 'undefined' && typeof wp.media !== 'undefined' && wp.media.frame) {
+            // console.log('Media Category Filter: wp.media.frame found on document ready. Extending views directly.');
+            extendMediaViews();
+        } else {
+            // console.log('Media Category Filter: wp.media.frame not found on document ready. Starting polling mechanism.');
+            var counter = 0;
+            var interval = setInterval(function() {
+                // console.log('Media Category Filter: Polling attempt #', counter + 1);
+                if (typeof wp !== 'undefined' && 
+                    typeof wp.media !== 'undefined' && 
+                    typeof wp.media.view !== 'undefined' && 
+                    typeof wp.media.view.AttachmentsBrowser !== 'undefined' &&
+                    typeof wp.media.view.AttachmentFilters !== 'undefined' &&
+                    typeof wp.media.view.AttachmentFilters.Select !== 'undefined') {
+                    clearInterval(interval);
+                    // console.log('Media Category Filter: Necessary WP Media objects found after polling. Extending views.');
+                    extendMediaViews();
+                } else if (counter >= 29) { // Try for 30 attempts (3 seconds total: 0-29 attempts)
+                    clearInterval(interval); // Give up
+                    // console.error('Media Category Filter: Could not initialize extensions after 3 seconds, WP Media objects still not found.');
+                }
+                counter++;
+            }, 100); // Check every 100ms
         }
     });
 

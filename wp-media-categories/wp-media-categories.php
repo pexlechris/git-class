@@ -3,7 +3,7 @@
  * Plugin Name:       Media Categories Filter
  * Plugin URI:        https://example.com/plugins/media-categories-filter/
  * Description:       Adds a custom taxonomy to categorize media items and provides filters in the media library and modal.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            Your Name or Company
  * Author URI:        https://example.com/
  * License:           GPL v2 or later
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Define constants
  */
-define( 'MEDIA_CATEGORIES_VERSION', '1.0.0' );
+define( 'MEDIA_CATEGORIES_VERSION', '1.0.1' );
 define( 'MEDIA_CATEGORIES_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MEDIA_CATEGORIES_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

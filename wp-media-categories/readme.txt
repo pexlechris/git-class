@@ -3,8 +3,8 @@ Contributors: (your username)
 Donate link: https://example.com/
 Tags: media, category, filter, taxonomy, admin, modal
 Requires at least: 5.0
-Tested up to: current_wp_version_placeholder
-Stable tag: 1.0.0
+Tested up to: 6.8
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -33,6 +33,10 @@ This plugin allows you to organize your WordPress media library by assigning cat
 2. Description of the second screenshot.
 
 == Changelog ==
+
+= 1.0.1 =
+* Fix: Improve robustness of Media Modal filter JavaScript to prevent potential timing errors.
+* Chore: Bump plugin version for asset cache busting.
 
 = 1.0.0 =
 * Initial release.
