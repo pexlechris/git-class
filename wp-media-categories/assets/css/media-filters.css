@@ -1,0 +1,30 @@
+/* Styling for Media Category Filters */
+
+/* Filter in Media Library List View (upload.php) */
+.wp-admin.upload-php .tablenav.top select[name="media_category"] {
+    /* Add some margin if needed, WordPress usually handles this well */
+    /* margin-right: 8px; */
+}
+
+/* Filter in Media Modal */
+.media-modal-content .media-toolbar select[data-setting="media_category"] {
+    /* Adjust width as needed, or let it be default */
+    /* min-width: 150px; */
+    /* margin-right: 10px; */ /* If placed next to other items */
+}
+
+/* You can add more specific styling if the default select appearance is not good */
+/* For example, to match WordPress UI more closely if default styles are off */
+/* .media-modal-content .media-toolbar select[data-setting="media_category"],
+.wp-admin.upload-php .tablenav.top select[name="media_category"] {
+    height: 28px;
+    line-height: 28px;
+    padding: 0 24px 0 8px;
+    border-color: #ddd;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.07);
+    background-color: #fff;
+    color: #32373c;
+    vertical-align: middle;
+} */
+
+/* Add any other specific styling needed for your filters */
